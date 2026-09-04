@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { REMOTES, remoteStatus } from './remotes.js';
+import { endpointLabel, HOST_LABEL, REMOTES, remoteStatus } from './remotes.js';
 
 const LABEL = { idle: 'not loaded yet', loading: 'loading…', ready: 'loaded', error: 'failed' };
 
@@ -26,7 +26,7 @@ export default function Inspector({ onClose }) {
         <span>
           <strong>host</strong> · shell
         </span>
-        <span className="inspector-port">:5173</span>
+        <span className="inspector-port">{HOST_LABEL}</span>
       </div>
 
       {Object.entries(REMOTES).map(([name, meta]) => (
@@ -36,7 +36,7 @@ export default function Inspector({ onClose }) {
             <strong>{name}</strong>
             <span className="tiny muted"> · {LABEL[status[name]]}</span>
           </span>
-          <span className="inspector-port">:{meta.port}</span>
+          <span className="inspector-port">{endpointLabel(meta.origin)}</span>
         </div>
       ))}
 
