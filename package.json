@@ -18,6 +18,9 @@
     "build": "npm run build:remotes && npm run build -w host && node scripts/bundle-remotes.mjs",
     "preview": "npm run build && npm run serve -w host"
   },
+  "allowScripts": {
+    "esbuild": true
+  },
   "devDependencies": {
     "concurrently": "^9.1.2"
   }
