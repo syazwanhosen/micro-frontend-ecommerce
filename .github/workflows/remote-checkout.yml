@@ -1,0 +1,25 @@
+# remote-checkout ships on its own schedule. This runs only when its own code —
+# or the shared package it compiles against — changes.
+name: remote-checkout
+
+on:
+  push:
+    paths:
+      - 'remote-checkout/**'
+      - 'shared/**'
+      - 'package-lock.json'
+      - '.github/workflows/remote-checkout.yml'
+      - '.github/workflows/build-app.yml'
+  pull_request:
+    paths:
+      - 'remote-checkout/**'
+      - 'shared/**'
+      - 'package-lock.json'
+      - '.github/workflows/remote-checkout.yml'
+      - '.github/workflows/build-app.yml'
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-app.yml
+    with:
+      workspace: remote-checkout

@@ -146,19 +146,72 @@ Run `npm run preview` to check the exact bytes that get deployed before pushing.
 
 ### Separate deploys (one project per remote)
 
-The point of the split is that each remote ships on its own schedule. To deploy
-a remote independently, host `remote-<name>/dist` anywhere that serves it with
-CORS enabled, then set the matching variable on the host's deploy:
+The point of the split is that each remote ships on its own schedule. Each
+remote carries its own `vercel.json`, so it deploys as a standalone Vercel
+project:
+
+| Setting | Value |
+| --- | --- |
+| Root Directory | `remote-catalog` (or `remote-cart`, `remote-checkout`) |
+| Everything else | comes from that remote's `vercel.json` |
+
+Its `vercel.json` does three things that matter:
+
+- **`Access-Control-Allow-Origin: *`** — the host imports `remoteEntry.js`
+  cross-origin, and ES module imports are CORS-checked. Without it the shell
+  sees a network error and renders its failure panel.
+- **`Cache-Control: must-revalidate` on `remoteEntry.js`** — that file carries
+  no content hash, so it is the one thing that must never be cached hard. It is
+  how a redeployed remote reaches an unchanged host.
+- **`ignoreCommand`** — skips the build when nothing in that remote or `shared/`
+  changed, so a catalog commit does not redeploy the cart.
+
+Then point the host at them (see `host/.env.example`):
 
 ```bash
-VITE_REMOTE_CATALOG=https://orbit-catalog.example.com
-VITE_REMOTE_CART=https://orbit-cart.example.com
-VITE_REMOTE_CHECKOUT=https://orbit-checkout.example.com
+VITE_REMOTE_CATALOG=https://orbit-catalog.vercel.app
+VITE_REMOTE_CART=https://orbit-cart.vercel.app
+VITE_REMOTE_CHECKOUT=https://orbit-checkout.vercel.app
 ```
 
 Any variable that is set wins over the same-origin default, so you can move one
 remote out without touching the other two. Only the host is rebuilt — and only
 because the URL changed, not because the remote's code did.
+
+Run the whole split topology locally with `npm run preview:split`: four servers
+on four origins, exactly as the separate deploys run.
+
+### Shipping a remote without redeploying the host
+
+This is the property the split is *for*, and it is worth confirming rather than
+assuming. With `npm run preview:split` running:
+
+1. Change something the catalog renders.
+2. Rebuild that remote alone — `npm run build -w remote-catalog`.
+3. Hard-reload the host. The change is there.
+
+The host's bundle is byte-identical throughout: it never learned what changed,
+only that the same URL now returns a different manifest. Rebuilding the host is
+required when a remote's *URL* changes, never when its *contents* do.
+
+### Per-app CI
+
+Each app has its own pipeline in `.github/workflows/`, filtered to its own
+directory plus `shared/`:
+
+| Workflow | Runs when |
+| --- | --- |
+| `remote-catalog.yml` | `remote-catalog/**` or `shared/**` changes |
+| `remote-cart.yml` | `remote-cart/**` or `shared/**` changes |
+| `remote-checkout.yml` | `remote-checkout/**` or `shared/**` changes |
+| `host.yml` | `host/**`, `scripts/**` or `shared/**` changes |
+
+They share one reusable job (`build-app.yml`) that builds a single workspace and
+asserts the remote emitted a `remoteEntry.js` — a remote that builds without one
+is broken in the only way that matters, because the host has nothing to import.
+
+A commit touching only `remote-catalog/` runs one pipeline. A commit touching
+`shared/` runs all four, because every app compiles it in.
 
 ## Notes and trade-offs
 

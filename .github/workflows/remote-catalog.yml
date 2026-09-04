@@ -1,0 +1,25 @@
+# remote-catalog ships on its own schedule. This runs only when its own code —
+# or the shared package it compiles against — changes.
+name: remote-catalog
+
+on:
+  push:
+    paths:
+      - 'remote-catalog/**'
+      - 'shared/**'
+      - 'package-lock.json'
+      - '.github/workflows/remote-catalog.yml'
+      - '.github/workflows/build-app.yml'
+  pull_request:
+    paths:
+      - 'remote-catalog/**'
+      - 'shared/**'
+      - 'package-lock.json'
+      - '.github/workflows/remote-catalog.yml'
+      - '.github/workflows/build-app.yml'
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-app.yml
+    with:
+      workspace: remote-catalog

@@ -1,0 +1,42 @@
+# One app's build, reused by each app's own pipeline. Nothing here knows about
+# the other three — that is the property Part 2 is trying to demonstrate.
+name: build app
+
+on:
+  workflow_call:
+    inputs:
+      workspace:
+        description: npm workspace to build (host, remote-catalog, …)
+        required: true
+        type: string
+      expects-remote-entry:
+        description: assert the federation manifest was emitted (remotes only)
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Workspaces share one lockfile, so the install is repo-wide even though
+      # the build that follows is not.
+      - run: npm ci
+
+      - run: npm run build -w ${{ inputs.workspace }}
+
+      # A remote that builds without emitting remoteEntry.js is broken in the
+      # one way that matters: the host has nothing to import.
+      - name: Assert the federation manifest exists
+        if: ${{ inputs.expects-remote-entry }}
+        run: |
+          entry="${{ inputs.workspace }}/dist/assets/remoteEntry.js"
+          test -f "$entry" || { echo "::error::$entry was not emitted"; exit 1; }
+          echo "$entry — $(wc -c < "$entry") bytes"

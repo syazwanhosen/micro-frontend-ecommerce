@@ -1,0 +1,25 @@
+# remote-cart ships on its own schedule. This runs only when its own code —
+# or the shared package it compiles against — changes.
+name: remote-cart
+
+on:
+  push:
+    paths:
+      - 'remote-cart/**'
+      - 'shared/**'
+      - 'package-lock.json'
+      - '.github/workflows/remote-cart.yml'
+      - '.github/workflows/build-app.yml'
+  pull_request:
+    paths:
+      - 'remote-cart/**'
+      - 'shared/**'
+      - 'package-lock.json'
+      - '.github/workflows/remote-cart.yml'
+      - '.github/workflows/build-app.yml'
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-app.yml
+    with:
+      workspace: remote-cart

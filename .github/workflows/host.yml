@@ -1,0 +1,31 @@
+# The shell. It does not rebuild when a remote changes — that is the whole
+# point: a remote ships by redeploying itself, and the host picks it up at
+# runtime from the same URL.
+name: host
+
+on:
+  push:
+    paths:
+      - 'host/**'
+      - 'shared/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/host.yml'
+      - '.github/workflows/build-app.yml'
+  pull_request:
+    paths:
+      - 'host/**'
+      - 'shared/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/host.yml'
+      - '.github/workflows/build-app.yml'
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-app.yml
+    with:
+      workspace: host
+      expects-remote-entry: false
