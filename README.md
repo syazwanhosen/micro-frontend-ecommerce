@@ -45,8 +45,8 @@ expose a `remoteEntry.js` — that is a constraint of the Vite federation plugin
 | --- | --- |
 | `npm run dev` | Build remotes once, serve everything, host in dev mode |
 | `npm run watch` | Same, but remotes rebuild on change (refresh the page to pick them up) |
-| `npm run build` | Production build of all four apps |
-| `npm run preview` | Build everything and serve the production output |
+| `npm run build` | Production build of all four apps, bundled into `host/dist` |
+| `npm run preview` | Build everything and serve exactly what gets deployed, on :5173 |
 
 > **After changing a remote**, rebuild it (`npm run build -w remote-cart`) and
 > **hard-reload** the host. `remoteEntry.js` has no content hash, so a normal
@@ -114,6 +114,52 @@ live status and ports.
 - Checkout is a demo form: it validates, then clears the cart and shows a
   locally generated order number. Nothing is submitted anywhere.
 
+## Deploying
+
+The host is a static site that fetches each remote's `remoteEntry.js` over the
+network at runtime, so **the remotes have to be reachable from the browser**, not
+from your machine. A build that still points at `http://localhost:5001` renders
+the shell fine and then shows "micro frontend unavailable" for every remote.
+
+### One deploy (default)
+
+`npm run build` builds all four apps and copies each remote's output into the
+host's, so one static directory serves the whole system:
+
+```
+host/dist/assets/…          the shell
+host/dist/catalog/assets/…  served at /catalog
+host/dist/cart/assets/…     served at /cart
+host/dist/checkout/assets/… served at /checkout
+```
+
+The production build points the host at those same-origin subpaths, so the
+output is deployable as-is. `vercel.json` wires this up:
+
+| Vercel setting | Value |
+| --- | --- |
+| Root Directory | `./` (the repository root, **not** `host`) |
+| Build Command | `npm run build` |
+| Output Directory | `host/dist` |
+
+Run `npm run preview` to check the exact bytes that get deployed before pushing.
+
+### Separate deploys (one project per remote)
+
+The point of the split is that each remote ships on its own schedule. To deploy
+a remote independently, host `remote-<name>/dist` anywhere that serves it with
+CORS enabled, then set the matching variable on the host's deploy:
+
+```bash
+VITE_REMOTE_CATALOG=https://orbit-catalog.example.com
+VITE_REMOTE_CART=https://orbit-cart.example.com
+VITE_REMOTE_CHECKOUT=https://orbit-checkout.example.com
+```
+
+Any variable that is set wins over the same-origin default, so you can move one
+remote out without touching the other two. Only the host is rebuilt — and only
+because the URL changed, not because the remote's code did.
+
 ## Notes and trade-offs
 
 - **Styling** is one shared stylesheet rather than per-remote CSS. That mirrors
@@ -123,7 +169,7 @@ live status and ports.
 - **React is a shared singleton** (`shared: ['react', 'react-dom']`), so hooks
   work across the host/remote boundary. All apps must stay on compatible
   versions.
-- **Remote URLs are hardcoded** to localhost in `host/vite.config.js`. In a real
-  deployment these become per-environment URLs, and each remote ships on its own
-  schedule without rebuilding the host.
+- **Remote URLs are a deployment decision**, resolved in `host/vite.config.js`:
+  localhost ports in dev, same-origin subpaths in a production build, or
+  whatever `VITE_REMOTE_<NAME>` says. See [Deploying](#deploying).
 - **Ports**: the host uses 5173 because macOS AirPlay Receiver occupies 5000.

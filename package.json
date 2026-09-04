@@ -15,8 +15,11 @@
     "build:remotes": "npm run build -w remote-catalog && npm run build -w remote-cart && npm run build -w remote-checkout",
     "dev": "npm run build:remotes && concurrently -k -n catalog,cart,checkout,host -c magenta,cyan,yellow,green \"npm run serve -w remote-catalog\" \"npm run serve -w remote-cart\" \"npm run serve -w remote-checkout\" \"npm run dev -w host\"",
     "watch": "npm run build:remotes && concurrently -k -n cat:build,cat:serve,crt:build,crt:serve,chk:build,chk:serve,host -c magenta,magenta,cyan,cyan,yellow,yellow,green \"npm run watch -w remote-catalog\" \"npm run serve -w remote-catalog\" \"npm run watch -w remote-cart\" \"npm run serve -w remote-cart\" \"npm run watch -w remote-checkout\" \"npm run serve -w remote-checkout\" \"npm run dev -w host\"",
-    "build": "npm run build:remotes && npm run build -w host",
-    "preview": "npm run build && concurrently -k -n catalog,cart,checkout,host -c magenta,cyan,yellow,green \"npm run serve -w remote-catalog\" \"npm run serve -w remote-cart\" \"npm run serve -w remote-checkout\" \"npm run serve -w host\""
+    "build": "npm run build:remotes && npm run build -w host && node scripts/bundle-remotes.mjs",
+    "preview": "npm run build && npm run serve -w host"
+  },
+  "allowScripts": {
+    "esbuild": true
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

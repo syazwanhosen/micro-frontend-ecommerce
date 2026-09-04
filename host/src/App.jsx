@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react';
 import { bus, EVENTS } from '@mfe/shared';
 import RemoteBoundary from './RemoteBoundary.jsx';
 import Inspector from './Inspector.jsx';
-import { CartBadge, CartPage, CheckoutPage, ProductDetail, ProductGrid } from './remotes.js';
+import {
+  CartBadge,
+  CartPage,
+  CheckoutPage,
+  endpointLabel,
+  HOST_LABEL,
+  ProductDetail,
+  ProductGrid,
+  REMOTES,
+} from './remotes.js';
 
 function parseRoute(hash) {
   const path = (hash || '#/').replace(/^#/, '');
@@ -112,7 +121,11 @@ export default function App() {
         Orbit Store — one shell composing three independently deployed micro frontends.
         <br />
         <span className="tiny">
-          host :5173 · catalog :5001 · cart :5002 · checkout :5003 · frontend only, no API
+          host {HOST_LABEL}
+          {Object.entries(REMOTES).map(([name, meta]) => (
+            <span key={name}> · {name} {endpointLabel(meta.origin)}</span>
+          ))}{' '}
+          · frontend only, no API
         </span>
       </footer>
 
