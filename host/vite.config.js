@@ -51,6 +51,13 @@ export default defineConfig(({ command, mode }) => {
     server: { port: PORT, strictPort: true },
     preview: { port: PORT, strictPort: true },
     build: {
+      // The repo root's dist/ — Vercel serves the Output Directory relative to
+      // the project Root Directory, which must be the repo root here so the
+      // remotes are buildable at all. Emitting straight to ./dist means the
+      // deploy works on Vercel's default Output Directory, with or without
+      // vercel.json being honoured.
+      outDir: '../dist',
+      emptyOutDir: true,
       target: 'esnext',
       minify: false,
       cssCodeSplit: false,

@@ -45,7 +45,7 @@ expose a `remoteEntry.js` — that is a constraint of the Vite federation plugin
 | --- | --- |
 | `npm run dev` | Build remotes once, serve everything, host in dev mode |
 | `npm run watch` | Same, but remotes rebuild on change (refresh the page to pick them up) |
-| `npm run build` | Production build of all four apps, bundled into `host/dist` |
+| `npm run build` | Production build of all four apps, bundled into `dist/` |
 | `npm run preview` | Build everything and serve exactly what gets deployed, on :5173 |
 
 > **After changing a remote**, rebuild it (`npm run build -w remote-cart`) and
@@ -127,10 +127,10 @@ the shell fine and then shows "micro frontend unavailable" for every remote.
 host's, so one static directory serves the whole system:
 
 ```
-host/dist/assets/…          the shell
-host/dist/catalog/assets/…  served at /catalog
-host/dist/cart/assets/…     served at /cart
-host/dist/checkout/assets/… served at /checkout
+dist/assets/…          the shell
+dist/catalog/assets/…  served at /catalog
+dist/cart/assets/…     served at /cart
+dist/checkout/assets/… served at /checkout
 ```
 
 The production build points the host at those same-origin subpaths, so the
@@ -138,9 +138,9 @@ output is deployable as-is. `vercel.json` wires this up:
 
 | Vercel setting | Value |
 | --- | --- |
-| Root Directory | `./` (the repository root, **not** `host`) |
+| Root Directory | `./` (the repository root, **not** `host`) — the remotes live outside `host/`, and Vercel cannot reach outside the Root Directory |
 | Build Command | `npm run build` |
-| Output Directory | `host/dist` |
+| Output Directory | `dist` (the default) |
 
 Run `npm run preview` to check the exact bytes that get deployed before pushing.
 
